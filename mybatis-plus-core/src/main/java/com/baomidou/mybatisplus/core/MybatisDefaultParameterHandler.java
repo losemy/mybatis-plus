@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.baomidou.mybatisplus.core;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.*;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.mapping.*;
@@ -65,7 +66,10 @@ public class MybatisDefaultParameterHandler extends DefaultParameterHandler {
      */
     protected static Object processBatch(MappedStatement ms, Object parameterObject) {
         //检查 parameterObject
-        if (null == parameterObject) {
+        if (null == parameterObject
+            || ReflectionKit.isPrimitiveOrWrapper(parameterObject.getClass())
+            || parameterObject.getClass() == String.class) {
+            //todo 这里需要处理下类型判断,逻辑删除还会进入这里,但SqlCommandType为UPDATE
             return null;
         }
         // 全局配置是否配置填充器
@@ -105,9 +109,8 @@ public class MybatisDefaultParameterHandler extends DefaultParameterHandler {
                         if (et != null) {
                             if (et instanceof Map) {
                                 Map<?, ?> realEtMap = (Map<?, ?>) et;
-                                if (realEtMap.containsKey("MP_OPTLOCK_ET_ORIGINAL")) {
-                                    //refer to OptimisticLockerInterceptor.MP_OPTLOCK_ET_ORIGINAL
-                                    tableInfo = TableInfoHelper.getTableInfo(realEtMap.get("MP_OPTLOCK_ET_ORIGINAL").getClass());
+                                if (realEtMap.containsKey(Constants.MP_OPTLOCK_ET_ORIGINAL)) {
+                                    tableInfo = TableInfoHelper.getTableInfo(realEtMap.get(Constants.MP_OPTLOCK_ET_ORIGINAL).getClass());
                                 }
                             } else {
                                 tableInfo = TableInfoHelper.getTableInfo(et.getClass());
@@ -216,7 +219,7 @@ public class MybatisDefaultParameterHandler extends DefaultParameterHandler {
                         MetaObject metaObject = configuration.newMetaObject(parameterObject);
                         value = metaObject.getValue(propertyName);
                     }
-                    TypeHandler<Object> typeHandler = (TypeHandler<Object>) parameterMapping.getTypeHandler();
+                    TypeHandler typeHandler = parameterMapping.getTypeHandler();
                     JdbcType jdbcType = parameterMapping.getJdbcType();
                     if (value == null && jdbcType == null) {
                         jdbcType = configuration.getJdbcTypeForNull();

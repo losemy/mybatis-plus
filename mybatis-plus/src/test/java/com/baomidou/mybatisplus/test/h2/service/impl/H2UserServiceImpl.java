@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,18 +15,21 @@
  */
 package com.baomidou.mybatisplus.test.h2.service.impl;
 
-import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.baomidou.mybatisplus.test.h2.entity.mapper.H2UserMapper;
-import com.baomidou.mybatisplus.test.h2.entity.persistent.H2User;
-import com.baomidou.mybatisplus.test.h2.service.IH2UserService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.metadata.OrderItem;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.test.h2.entity.H2User;
+import com.baomidou.mybatisplus.test.h2.mapper.H2UserMapper;
+import com.baomidou.mybatisplus.test.h2.service.IH2UserService;
 
 /**
  * Service层测试
@@ -82,7 +85,9 @@ public class H2UserServiceImpl extends ServiceImpl<H2UserMapper, H2User> impleme
 
     @Override
     public List<Map<?,?>> mySelectMaps() {
-        return baseMapper.mySelectMaps();
+        Page<H2User> page = new Page<>(1,3);
+        page.addOrder(OrderItem.asc("name"));
+        return baseMapper.mySelectMaps(page);
     }
 
     @Override

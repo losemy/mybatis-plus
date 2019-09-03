@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 package com.baomidou.mybatisplus.test.h2;
 
-import com.baomidou.mybatisplus.test.h2.entity.persistent.H2User;
+import com.baomidou.mybatisplus.test.h2.entity.H2User;
 import com.baomidou.mybatisplus.test.h2.service.IH2UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

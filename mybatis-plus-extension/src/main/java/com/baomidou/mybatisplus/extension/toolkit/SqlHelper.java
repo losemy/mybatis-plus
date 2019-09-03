@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,8 +15,11 @@
  */
 package com.baomidou.mybatisplus.extension.toolkit;
 
-import java.util.List;
-
+import com.baomidou.mybatisplus.core.metadata.TableInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.baomidou.mybatisplus.core.toolkit.Assert;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.ExecutorType;
@@ -24,11 +27,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionUtils;
 
-import com.baomidou.mybatisplus.core.metadata.TableInfo;
-import com.baomidou.mybatisplus.core.toolkit.Assert;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
-import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper;
+import java.util.List;
 
 /**
  * SQL 辅助类
@@ -39,6 +38,9 @@ import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper;
 public final class SqlHelper {
 
     private static final Log logger = LogFactory.getLog(SqlHelper.class);
+    /**
+     * 主要用于 service 和 ar
+     */
     public static SqlSessionFactory FACTORY;
 
 
@@ -99,8 +101,10 @@ public final class SqlHelper {
      * 删除不存在的逻辑上属于成功
      *
      * @param result 数据库操作返回影响条数
+     * @deprecated  3.1.1 {@link SqlHelper#retBool(java.lang.Integer)}
      * @return boolean
      */
+    @Deprecated
     public static boolean delBool(Integer result) {
         return null != result && result >= 0;
     }
@@ -119,14 +123,27 @@ public final class SqlHelper {
      * 从list中取第一条数据返回对应List中泛型的单个结果
      *
      * @param list ignore
-     * @param <E> ignore
+     * @param <E>  ignore
+     * @return ignore
+     * @deprecated 3.1.1
+     */
+    @Deprecated
+    public static <E> E getObject(List<E> list) {
+        return getObject(logger, list);
+    }
+
+    /**
+     * 从list中取第一条数据返回对应List中泛型的单个结果
+     *
+     * @param list ignore
+     * @param <E>  ignore
      * @return ignore
      */
-    public static <E> E getObject(List<E> list) {
+    public static <E> E getObject(Log log, List<E> list) {
         if (CollectionUtils.isNotEmpty(list)) {
             int size = list.size();
             if (size > 1) {
-                logger.warn(String.format("Warn: execute Method There are  %s results.", size));
+                log.warn(String.format("Warn: execute Method There are  %s results.", size));
             }
             return list.get(0);
         }

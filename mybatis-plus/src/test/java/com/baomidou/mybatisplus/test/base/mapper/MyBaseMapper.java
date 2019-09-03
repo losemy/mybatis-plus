@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 package com.baomidou.mybatisplus.test.base.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -28,4 +30,6 @@ public interface MyBaseMapper<T> extends BaseMapper<T> {
     int deleteByIdWithFill(T entity);
 
     int insertBatchSomeColumn(List<T> entityList);
+
+    int alwaysUpdateSomeColumnById(@Param(Constants.ENTITY) T entity);
 }

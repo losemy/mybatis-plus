@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,12 @@
  */
 package com.baomidou.mybatisplus.extension.kotlin
 
+import com.baomidou.mybatisplus.core.conditions.SharedString
 import com.baomidou.mybatisplus.core.conditions.query.Query
 import com.baomidou.mybatisplus.core.conditions.segments.MergeSegments
 import com.baomidou.mybatisplus.core.metadata.TableFieldInfo
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper
 import com.baomidou.mybatisplus.core.toolkit.ArrayUtils
-import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
 import kotlin.reflect.KProperty
@@ -49,13 +50,16 @@ class KtQueryWrapper<T : Any> : AbstractKtWrapper<T, KtQueryWrapper<T>>, Query<K
     }
 
     internal constructor(entity: T, entityClass: Class<T>?, sqlSelect: String?, paramNameSeq: AtomicInteger,
-                         paramNameValuePairs: Map<String, Any>, mergeSegments: MergeSegments) {
-        this.entity = entity
-        this.entityClass = entityClass
+                         paramNameValuePairs: Map<String, Any>, mergeSegments: MergeSegments,
+                         lastSql: SharedString, sqlComment: SharedString) {
+        this.setEntity(entity)
         this.paramNameSeq = paramNameSeq
         this.paramNameValuePairs = paramNameValuePairs
         this.expression = mergeSegments
         this.sqlSelect = sqlSelect
+        this.entityClass = entityClass
+        this.lastSql = lastSql
+        this.sqlComment = sqlComment
     }
 
     /**
@@ -108,6 +112,7 @@ class KtQueryWrapper<T : Any> : AbstractKtWrapper<T, KtQueryWrapper<T>>, Query<K
      * 故 sqlSelect 不向下传递
      */
     override fun instance(): KtQueryWrapper<T> {
-        return KtQueryWrapper(entity, entityClass, null, paramNameSeq, paramNameValuePairs, MergeSegments())
+        return KtQueryWrapper(entity, entityClass, null, paramNameSeq, paramNameValuePairs, expression,
+            SharedString.emptyString(), SharedString.emptyString())
     }
 }

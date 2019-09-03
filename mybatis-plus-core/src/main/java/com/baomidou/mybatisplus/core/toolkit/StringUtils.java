@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,8 @@
  */
 package com.baomidou.mybatisplus.core.toolkit;
 
-import static java.util.stream.Collectors.joining;
+import com.baomidou.mybatisplus.core.toolkit.sql.StringEscape;
+import com.baomidou.mybatisplus.core.toolkit.support.BiIntFunction;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
@@ -26,8 +27,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.baomidou.mybatisplus.core.toolkit.sql.StringEscape;
-import com.baomidou.mybatisplus.core.toolkit.support.BiIntFunction;
+import static java.util.stream.Collectors.joining;
 
 /**
  * <p>
@@ -42,7 +42,7 @@ public class StringUtils {
     /**
      * 空字符
      */
-    public static final String EMPTY = "";
+    public static final String EMPTY = StringPool.EMPTY;
     /**
      * 字符串 is
      */
@@ -52,13 +52,18 @@ public class StringUtils {
      */
     public static final char UNDERLINE = '_';
     /**
-     * 占位符
+     * MP 内定义的 SQL 占位符表达式，匹配诸如 {0},{1},{2} ... 的形式
      */
-    public static final String PLACE_HOLDER = "{%s}";
+    public final static Pattern MP_SQL_PLACE_HOLDER = Pattern.compile("[{](?<idx>\\d+)}");
     /**
      * 验证字符串是否是数据库字段
      */
     private static final Pattern P_IS_COLUMN = Pattern.compile("^\\w\\S*[\\w\\d]*$");
+
+    /**
+     * 是否为大写命名
+     */
+    private static final Pattern CAPITAL_MODE = Pattern.compile("^[0-9A-Z/_]+$");
 
     private StringUtils() {
         // to do nothing
@@ -116,6 +121,21 @@ public class StringUtils {
     }
 
     /**
+     * 判断字符串是不是驼峰命名
+     * <li> 包含 '_' 不算 </li>
+     * <li> 首字母大写的不算 </li>
+     *
+     * @param str 字符串
+     * @return 结果
+     */
+    public static boolean isCamel(String str) {
+        if (str.contains(StringPool.UNDERSCORE)) {
+            return false;
+        }
+        return Character.isLowerCase(str.charAt(0));
+    }
+
+    /**
      * 判断字符串是否不为空
      *
      * @param cs 需要判断字符串
@@ -133,6 +153,19 @@ public class StringUtils {
      */
     public static boolean isNotColumnName(String str) {
         return !P_IS_COLUMN.matcher(str).matches();
+    }
+
+    /**
+     * 获取真正的字段名
+     *
+     * @param column 字段名
+     * @return 字段名
+     */
+    public static String getTargetColumn(String column) {
+        if (isNotColumnName(column)) {
+            return column.substring(1, column.length() - 1);
+        }
+        return column;
     }
 
     /**
@@ -235,11 +268,6 @@ public class StringUtils {
         }
         return Pattern.matches(regex, input);
     }
-
-    /**
-     * MP 内定义的 SQL 占位符表达式，匹配诸如 {0},{1},{2} ... 的形式
-     */
-    public final static Pattern MP_SQL_PLACE_HOLDER = Pattern.compile("[{](?<idx>\\d+)}");
 
     /**
      * 替换 SQL 语句中的占位符，例如输入 SELECT * FROM test WHERE id = {0} AND name = {1} 会被替换为
@@ -406,7 +434,7 @@ public class StringUtils {
      * @return ignore
      */
     public static boolean isCapitalMode(String word) {
-        return null != word && word.matches("^[0-9A-Z/_]+$");
+        return null != word && CAPITAL_MODE.matcher(word).matches();
     }
 
     /**
@@ -795,7 +823,9 @@ public class StringUtils {
      * @param s 原字符串
      * @param p 移除的单词
      * @return ignore
+     * @deprecated 3.1.1
      */
+    @Deprecated
     public static String removeWordWithComma(String s, String p) {
         String match = "\\s*" + p + "\\s*,{0,1}";
         return s.replaceAll(match, "");

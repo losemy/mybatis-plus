@@ -44,7 +44,9 @@ public class ${entity} extends Model<${entity}> {
 public class ${entity} implements Serializable {
 </#if>
 
+<#if entitySerialVersionUID>
     private static final long serialVersionUID = 1L;
+</#if>
 <#-- ----------  BEGIN 字段循环遍历  ---------->
 <#list table.fields as field>
     <#if field.keyFlag>
@@ -52,16 +54,16 @@ public class ${entity} implements Serializable {
     </#if>
 
     <#if field.comment!?length gt 0>
-    <#if swagger2>
+        <#if swagger2>
     @ApiModelProperty(value = "${field.comment}")
-    <#else>
+        <#else>
     /**
      * ${field.comment}
      */
-    </#if>
+        </#if>
     </#if>
     <#if field.keyFlag>
-    <#-- 主键 -->
+        <#-- 主键 -->
         <#if field.keyIdentityFlag>
     @TableId(value = "${field.name}", type = IdType.AUTO)
         <#elseif idType??>
@@ -69,7 +71,7 @@ public class ${entity} implements Serializable {
         <#elseif field.convert>
     @TableId("${field.name}")
         </#if>
-    <#-- 普通字段 -->
+        <#-- 普通字段 -->
     <#elseif field.fill??>
     <#-- -----   存在字段填充设置   ----->
         <#if field.convert>
@@ -80,11 +82,11 @@ public class ${entity} implements Serializable {
     <#elseif field.convert>
     @TableField("${field.name}")
     </#if>
-<#-- 乐观锁注解 -->
+    <#-- 乐观锁注解 -->
     <#if (versionFieldName!"") == field.name>
     @Version
     </#if>
-<#-- 逻辑删除注解 -->
+    <#-- 逻辑删除注解 -->
     <#if (logicDeleteFieldName!"") == field.name>
     @TableLogic
     </#if>
@@ -103,11 +105,11 @@ public class ${entity} implements Serializable {
         return ${field.propertyName};
     }
 
-        <#if entityBuilderModel>
+    <#if entityBuilderModel>
     public ${entity} set${field.capitalName}(${field.propertyType} ${field.propertyName}) {
-        <#else>
+    <#else>
     public void set${field.capitalName}(${field.propertyType} ${field.propertyName}) {
-        </#if>
+    </#if>
         this.${field.propertyName} = ${field.propertyName};
         <#if entityBuilderModel>
         return this;
@@ -139,9 +141,9 @@ public class ${entity} implements Serializable {
         return "${entity}{" +
     <#list table.fields as field>
         <#if field_index==0>
-        "${field.propertyName}=" + ${field.propertyName} +
+            "${field.propertyName}=" + ${field.propertyName} +
         <#else>
-        ", ${field.propertyName}=" + ${field.propertyName} +
+            ", ${field.propertyName}=" + ${field.propertyName} +
         </#if>
     </#list>
         "}";

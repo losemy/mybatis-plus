@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ package com.baomidou.mybatisplus.annotation;
  * @since 2018-01-05
  */
 public class SqlCondition {
-
     /**
      * 等于
      */
@@ -43,6 +42,4 @@ public class SqlCondition {
      * 右 %
      */
     public static final String LIKE_RIGHT = "%s LIKE CONCAT(#{%s},'%%')";
-
-
 }

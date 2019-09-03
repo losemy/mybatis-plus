@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,6 +86,7 @@ public class NormalSegmentList extends AbstractISegmentList {
         if (MatchSegment.AND_OR.match(lastValue)) {
             removeAndFlushLast();
         }
-        return this.stream().map(ISqlSegment::getSqlSegment).collect(Collectors.joining(SPACE));
+        final String str = this.stream().map(ISqlSegment::getSqlSegment).collect(Collectors.joining(SPACE));
+        return (str.startsWith(LEFT_BRACKET) && str.endsWith(RIGHT_BRACKET)) ? str : (LEFT_BRACKET + str + RIGHT_BRACKET);
     }
 }

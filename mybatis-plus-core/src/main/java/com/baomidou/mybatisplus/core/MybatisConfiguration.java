@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,24 @@
 package com.baomidou.mybatisplus.core;
 
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.executor.MybatisBatchExecutor;
+import com.baomidou.mybatisplus.core.executor.MybatisReuseExecutor;
+import com.baomidou.mybatisplus.core.executor.MybatisSimpleExecutor;
+import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.ibatis.binding.MapperRegistry;
+import org.apache.ibatis.executor.CachingExecutor;
+import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.transaction.Transaction;
 
 /**
  * replace default Configuration class
@@ -35,11 +44,15 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class MybatisConfiguration extends Configuration {
     private static final Log logger = LogFactory.getLog(MybatisConfiguration.class);
-
     /**
      * Mapper 注册
      */
     protected final MybatisMapperRegistry mybatisMapperRegistry = new MybatisMapperRegistry(this);
+
+    // TODO 自己的 GlobalConfig
+    @Setter
+    @Getter
+    private GlobalConfig globalConfig = GlobalConfigUtils.defaults();
 
     public MybatisConfiguration(Environment environment) {
         this();
@@ -53,24 +66,6 @@ public class MybatisConfiguration extends Configuration {
         super();
         this.mapUnderscoreToCamelCase = true;
         languageRegistry.setDefaultDriverClass(MybatisXMLLanguageDriver.class);
-    }
-
-    /**
-     * 配置初始化
-     */
-    public void init(GlobalConfig globalConfig) {
-        // 初始化 Sequence
-        if (null != globalConfig.getWorkerId()
-            && null != globalConfig.getDatacenterId()) {
-            IdWorker.initSequence(globalConfig.getWorkerId(), globalConfig.getDatacenterId());
-        }
-        // 打印 Banner
-        if (globalConfig.isBanner()) {
-            System.out.println(" _ _   |_  _ _|_. ___ _ |    _ ");
-            System.out.println("| | |\\/|_)(_| | |_\\  |_)||_|_\\ ");
-            System.out.println("     /               |         ");
-            System.out.println("                        " + MybatisPlusVersion.getVersion() + " ");
-        }
     }
 
     /**
@@ -140,7 +135,7 @@ public class MybatisConfiguration extends Configuration {
     public boolean hasMapper(Class<?> type) {
         return mybatisMapperRegistry.hasMapper(type);
     }
-    
+
     /**
      * 指定动态SQL生成的默认语言
      *
@@ -153,5 +148,24 @@ public class MybatisConfiguration extends Configuration {
             driver = MybatisXMLLanguageDriver.class;
         }
         getLanguageRegistry().setDefaultDriverClass(driver);
+    }
+    
+    @Override
+    public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+        executorType = executorType == null ? defaultExecutorType : executorType;
+        executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
+        Executor executor;
+        if (ExecutorType.BATCH == executorType) {
+            executor = new MybatisBatchExecutor(this, transaction);
+        } else if (ExecutorType.REUSE == executorType) {
+            executor = new MybatisReuseExecutor(this, transaction);
+        } else {
+            executor = new MybatisSimpleExecutor(this, transaction);
+        }
+        if (cacheEnabled) {
+            executor = new CachingExecutor(executor);
+        }
+        executor = (Executor) interceptorChain.pluginAll(executor);
+        return executor;
     }
 }

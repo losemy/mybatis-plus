@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,6 +59,7 @@ public interface StringPool {
     String LEFT_BRACE = "{";
     String LEFT_BRACKET = "(";
     String LEFT_CHEV = "<";
+    String DOT_NEWLINE = ",\n";
     String NEWLINE = "\n";
     String N = "n";
     String NO = "no";

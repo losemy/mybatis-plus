@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import java.security.MessageDigest;
 import java.util.Base64;
 
 /**
- * 枚举处理工具类
+ * 加密工具类
  *
  * @author hubin
  * @since 2018-08-02

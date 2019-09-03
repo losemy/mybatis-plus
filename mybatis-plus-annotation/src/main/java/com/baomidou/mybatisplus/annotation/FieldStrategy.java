@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,5 +39,9 @@ public enum FieldStrategy {
      * <p>1. 在全局里代表 NOT_NULL</p>
      * <p>2. 在注解里代表 跟随全局</p>
      */
-    DEFAULT
+    DEFAULT,
+    /**
+     * 不加入 SQL
+     */
+    NEVER
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,8 @@ public class SelectOne extends AbstractMethod {
         SqlMethod sqlMethod = SqlMethod.SELECT_ONE;
         SqlSource sqlSource = languageDriver.createSqlSource(configuration, String.format(sqlMethod.getSql(),
             this.sqlSelectColumns(tableInfo, true), tableInfo.getTableName(),
-            this.sqlWhereEntityWrapper(true, tableInfo)), modelClass);
-        return this.addSelectMappedStatement(mapperClass, sqlMethod.getMethod(), sqlSource, modelClass, tableInfo);
+            this.sqlWhereEntityWrapper(true, tableInfo), sqlComment()),
+            modelClass);
+        return this.addSelectMappedStatementForTable(mapperClass, sqlMethod.getMethod(), sqlSource, tableInfo);
     }
 }

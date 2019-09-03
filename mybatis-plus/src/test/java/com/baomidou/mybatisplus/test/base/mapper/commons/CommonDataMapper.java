@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@ package com.baomidou.mybatisplus.test.base.mapper.commons;
 
 import com.baomidou.mybatisplus.annotation.SqlParser;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.test.base.entity.CommonData;
@@ -32,12 +31,14 @@ import java.util.Optional;
  * @author miemie
  * @since 2018/6/7
  */
+@SqlParser
 public interface CommonDataMapper extends MyBaseMapper<CommonData> {
 
     @SqlParser(filter = true)
     @Select("select * from common_data")
     List<CommonData> getAllNoTenant();
 
+    @SqlParser
     @Select("select * from common_data ${ew.customSqlSegment}")
     List<CommonData> getByWrapper(@Param(Constants.WRAPPER) Wrapper wrapper);
 
@@ -45,5 +46,5 @@ public interface CommonDataMapper extends MyBaseMapper<CommonData> {
     Optional<CommonData> getById(Long id);
 
     @Select("select * from common_data")
-    IPage<CommonData> myPage(Page<CommonData> page);
+    Page<CommonData> myPage(Page<CommonData> page);
 }

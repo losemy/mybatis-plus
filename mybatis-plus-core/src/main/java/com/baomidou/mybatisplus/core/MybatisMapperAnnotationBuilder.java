@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.baomidou.mybatisplus.core;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.parser.SqlParserHelper;
 import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
 import org.apache.ibatis.annotations.*;
 import org.apache.ibatis.annotations.ResultMap;
@@ -40,7 +41,6 @@ import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.parsing.PropertyParser;
 import org.apache.ibatis.reflection.TypeParameterResolver;
 import org.apache.ibatis.scripting.LanguageDriver;
-import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.type.JdbcType;
@@ -81,11 +81,11 @@ public class MybatisMapperAnnotationBuilder extends MapperAnnotationBuilder {
         SQL_PROVIDER_ANNOTATION_TYPES.add(DeleteProvider.class);
     }
 
-    private final Configuration configuration;
+    private final MybatisConfiguration configuration;
     private final MapperBuilderAssistant assistant;
     private final Class<?> type;
 
-    public MybatisMapperAnnotationBuilder(Configuration configuration, Class<?> type) {
+    public MybatisMapperAnnotationBuilder(MybatisConfiguration configuration, Class<?> type) {
         super(configuration, type);
         String resource = type.getName().replace('.', '/') + ".java (best guess)";
         this.assistant = new MapperBuilderAssistant(configuration, resource);
@@ -99,26 +99,27 @@ public class MybatisMapperAnnotationBuilder extends MapperAnnotationBuilder {
         if (!configuration.isResourceLoaded(resource)) {
             loadXmlResource();
             configuration.addLoadedResource(resource);
-            assistant.setCurrentNamespace(type.getName());
+            final String typeName = type.getName();
+            assistant.setCurrentNamespace(typeName);
             parseCache();
             parseCacheRef();
+            SqlParserHelper.initSqlParserInfoCache(type);
             Method[] methods = type.getMethods();
-            // TODO 注入 CURD 动态 SQL (应该在注解之前注入)
-            if (GlobalConfigUtils.getSuperMapperClass(configuration).isAssignableFrom(type)) {
-                GlobalConfigUtils.getSqlInjector(configuration).inspectInject(assistant, type);
-            }
             for (Method method : methods) {
                 try {
                     // issue #237
                     if (!method.isBridge()) {
                         parseStatement(method);
+                        SqlParserHelper.initSqlParserInfoCache(typeName, method);
                     }
                 } catch (IncompleteElementException e) {
-                    /*
-                     * 使用 MybatisMethodResolver 而不是 MethodResolver
-                     */
+                    // TODO 使用 MybatisMethodResolver 而不是 MethodResolver
                     configuration.addIncompleteMethod(new MybatisMethodResolver(this, method));
                 }
+            }
+            // TODO 注入 CURD 动态 SQL , 放在在最后, because 可能会有人会用注解重写sql
+            if (GlobalConfigUtils.isSupperMapperChildren(configuration, type)) {
+                GlobalConfigUtils.getSqlInjector(configuration).inspectInject(assistant, type);
             }
         }
         parsePendingMethods();
@@ -326,15 +327,7 @@ public class MybatisMapperAnnotationBuilder extends MapperAnnotationBuilder {
             String resultMapId = null;
             ResultMap resultMapAnnotation = method.getAnnotation(ResultMap.class);
             if (resultMapAnnotation != null) {
-                String[] resultMaps = resultMapAnnotation.value();
-                StringBuilder sb = new StringBuilder();
-                for (String resultMap : resultMaps) {
-                    if (sb.length() > 0) {
-                        sb.append(",");
-                    }
-                    sb.append(resultMap);
-                }
-                resultMapId = sb.toString();
+                resultMapId = String.join(",", resultMapAnnotation.value());
             } else if (isSelect) {
                 resultMapId = parseResultMap(method);
             }
@@ -373,7 +366,7 @@ public class MybatisMapperAnnotationBuilder extends MapperAnnotationBuilder {
         if (lang != null) {
             langClass = lang.value();
         }
-        return assistant.getLanguageDriver(langClass);
+        return configuration.getLanguageDriver(langClass);
     }
 
     private Class<?> getParameterType(Method method) {
@@ -444,19 +437,17 @@ public class MybatisMapperAnnotationBuilder extends MapperAnnotationBuilder {
                     returnType = (Class<?>) returnTypeParameter;
                 }
             }
-            /*
-             * 新加入下面 7 行
-             */
-            else if (IPage.class.equals(rawType)) {
+            // TODO 下面是支援 IPage 及其子类作为返回值的
+            else if (IPage.class.isAssignableFrom(rawType)) {
                 Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
                 Type returnTypeParameter = actualTypeArguments[0];
                 if (returnTypeParameter instanceof Class<?>) {
                     returnType = (Class<?>) returnTypeParameter;
+                } else if (returnTypeParameter instanceof ParameterizedType) {
+                    returnType = (Class<?>) ((ParameterizedType) returnTypeParameter).getRawType();
                 }
             }
-            /*
-             * 新加入上面 7 行
-             */
+            // TODO 上面是支援 IPage 及其子类作为返回值的
         }
 
         return returnType;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.baomidou.mybatisplus.core.toolkit.support;
 
 import java.io.Serializable;
+import java.util.function.Function;
 
 /**
  * 支持序列化的 Function
@@ -24,13 +25,5 @@ import java.io.Serializable;
  * @since 2018-05-12
  */
 @FunctionalInterface
-public interface SFunction<T, R> extends Serializable {
-
-    /**
-     * Applies this function to the given argument.
-     *
-     * @param t the function argument
-     * @return the function result
-     */
-    R apply(T t);
+public interface SFunction<T, R> extends Function<T, R>, Serializable {
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,21 +15,20 @@
  */
 package com.baomidou.mybatisplus.generator.config;
 
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.ClassUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper;
 import com.baomidou.mybatisplus.generator.config.po.TableFill;
 import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
-
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 策略配置项
@@ -40,7 +39,6 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class StrategyConfig {
-
     /**
      * 是否大写命名
      */
@@ -49,6 +47,10 @@ public class StrategyConfig {
      * 是否跳过视图
      */
     private boolean skipView = false;
+    /**
+     * 名称转换
+     */
+    private INameConvert nameConvert;
     /**
      * 数据库表映射到实体的命名策略
      */
@@ -104,6 +106,10 @@ public class StrategyConfig {
      */
     @Setter(AccessLevel.NONE)
     private String[] exclude = null;
+    /**
+     * 实体是否生成 serialVersionUID
+     */
+    private boolean entitySerialVersionUID = true;
     /**
      * 【实体】是否生成字段常量（默认 false）<br>
      * -----------------------------------<br>

@@ -18,6 +18,7 @@ package com.baomidou.mybatisplus.core.toolkit;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.core.toolkit.support.SerializedLambda;
 import lombok.Getter;
+import org.apache.ibatis.reflection.property.PropertyNamer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +29,7 @@ class LambdaUtilsTest {
         SerializedLambda lambda = LambdaUtils.resolve(TestPojo::getId);
         Assertions.assertEquals(TestPojo.class.getName(), lambda.getImplClassName());
         Assertions.assertEquals("getId", lambda.getImplMethodName());
-        Assertions.assertEquals("id", StringUtils.resolveFieldName(lambda.getImplMethodName()));
+        Assertions.assertEquals("id", PropertyNamer.methodToProperty(lambda.getImplMethodName()));
 
         Cond<TestPojo> cond = new Cond<>();
         System.out.println(cond.eq(TestPojo::getId, 123).toString());
@@ -44,6 +45,20 @@ class LambdaUtilsTest {
             eq(TestPojo::getId, 456);
         }};
     }
+
+    /**
+     * 在 Java 中，一般来讲，只要是泛型，肯定是引用类型，但是为了避免翻车，还是测试一下
+     */
+    @Test
+    void test() {
+        assertInstantiatedMethodTypeIsReference(LambdaUtils.resolve(TestPojo::getId));
+        assertInstantiatedMethodTypeIsReference(LambdaUtils.resolve(Integer::byteValue));
+    }
+
+    private void assertInstantiatedMethodTypeIsReference(SerializedLambda lambda) {
+        Assertions.assertNotNull(lambda.getInstantiatedMethodType());
+    }
+
 
     @Getter
     private class TestPojo {

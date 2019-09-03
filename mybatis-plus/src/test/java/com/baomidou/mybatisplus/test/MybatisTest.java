@@ -19,11 +19,10 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.handlers.EnumTypeHandler;
-import com.baomidou.mybatisplus.test.h2.entity.enums.AgeEnum;
-import com.baomidou.mybatisplus.test.h2.entity.mapper.H2UserMapper;
-import com.baomidou.mybatisplus.test.h2.entity.persistent.H2User;
-
+import com.baomidou.mybatisplus.extension.handlers.MybatisEnumTypeHandler;
+import com.baomidou.mybatisplus.test.h2.entity.H2User;
+import com.baomidou.mybatisplus.test.h2.enums.AgeEnum;
+import com.baomidou.mybatisplus.test.h2.mapper.H2UserMapper;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.ibatis.session.Configuration;
@@ -68,14 +67,12 @@ class MybatisTest {
          *  如果是将defaultEnumTypeHandler设置成MP的处理器,
          *  请自行注册处理非MP枚举处理类的原生枚举类型
          */
-        typeHandlerRegistry.register(AgeEnum.class, EnumTypeHandler.class);     //这里我举起了个栗子
+        typeHandlerRegistry.register(AgeEnum.class, MybatisEnumTypeHandler.class);     //这里我举起了个栗子
         Connection connection = dataSource.getConnection();
         ScriptRunner scriptRunner = new ScriptRunner(connection);
         scriptRunner.runScript(Resources.getResourceAsReader("h2/user.ddl.sql"));
         H2UserMapper mapper = sqlSession.getMapper(H2UserMapper.class);
-        mapper.delete(new QueryWrapper<>());
         Assertions.assertEquals(mapper.myInsertWithNameVersion("test", 2), 1);
-        Assertions.assertEquals(mapper.mySelectMaps().size(), 1);
         Assertions.assertEquals(mapper.insert(new H2User("test")), 1);
         Assertions.assertEquals(mapper.selectCount(new QueryWrapper<H2User>().lambda().eq(H2User::getName, "test")), 2);
         Assertions.assertEquals(mapper.delete(new QueryWrapper<H2User>().lambda().eq(H2User::getName, "test")), 2);
@@ -88,8 +85,7 @@ class MybatisTest {
         Assertions.assertNotNull(user.getTestType());
         Assertions.assertEquals(mapper.updateById(new H2User(66L, "777777")), 1);
         Assertions.assertEquals(mapper.deleteById(66L), 1);
-        Assertions.assertEquals(mapper.insert(h2User), 1);
-        Assertions.assertEquals(mapper.delete(new QueryWrapper<>()), 1);
+        Assertions.assertNull(mapper.selectById(66L));
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -72,16 +72,12 @@ public class StringEscape {
     }
 
     /**
-     * 转义字符串
+     * 转义字符串。纯转义，不添加单引号。
      *
      * @param escapeStr 被转义的字符串
      * @return 转义后的字符串
      */
-    public static String escapeString(String escapeStr) {
-        if (escapeStr.matches("\'(.+)\'")) {
-            escapeStr = escapeStr.substring(1, escapeStr.length() - 1);
-        }
-        String parameterAsString = escapeStr;
+    public static String escapeRawString(String escapeStr) {
         int stringLength = escapeStr.length();
         if (isEscapeNeededForString(escapeStr, stringLength)) {
             StringBuilder buf = new StringBuilder((int) (escapeStr.length() * 1.1));
@@ -138,9 +134,23 @@ public class StringEscape {
                         buf.append(c);
                 }
             }
-            parameterAsString = buf.toString();
+            return buf.toString();
+        } else {
+            return escapeStr;
         }
-        return "\'" + parameterAsString + "\'";
+    }
+
+    /**
+     * 转义字符串
+     *
+     * @param escapeStr 被转义的字符串
+     * @return 转义后的字符串
+     */
+    public static String escapeString(String escapeStr) {
+        if (escapeStr.matches("\'(.+)\'")) {
+            escapeStr = escapeStr.substring(1, escapeStr.length() - 1);
+        }
+        return "\'" + escapeRawString(escapeStr) + "\'";
     }
 
 }

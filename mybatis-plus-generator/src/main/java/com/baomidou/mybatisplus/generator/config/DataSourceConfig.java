@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,6 +90,12 @@ public class DataSourceConfig {
                 case H2:
                     dbQuery = new H2Query();
                     break;
+                case SQLITE:
+                    dbQuery = new SqliteQuery();
+                    break;
+                case DM:
+                    dbQuery = new DMQuery();
+                    break;
                 default:
                     // 默认 MYSQL
                     dbQuery = new MySqlQuery();
@@ -137,6 +143,8 @@ public class DataSourceConfig {
             return DbType.DB2;
         } else if (str.contains("mariadb")) {
             return DbType.MARIADB;
+        } else if (str.contains("sqlite")) {
+            return DbType.MARIADB;
         } else if (str.contains("h2")) {
             return DbType.H2;
         } else {
@@ -158,6 +166,12 @@ public class DataSourceConfig {
                     break;
                 case DB2:
                     typeConvert = new DB2TypeConvert();
+                    break;
+                case SQLITE:
+                    typeConvert = new SqliteTypeConvert();
+                    break;
+                case DM:
+                    typeConvert = new DmTypeConvert();
                     break;
                 case MARIADB:
                     typeConvert = new MySqlTypeConvert();

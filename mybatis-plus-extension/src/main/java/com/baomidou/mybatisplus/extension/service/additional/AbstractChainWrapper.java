@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,6 @@
  */
 package com.baomidou.mybatisplus.extension.service.additional;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.function.BiPredicate;
-import java.util.function.Function;
-
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.interfaces.Compare;
@@ -28,6 +23,11 @@ import com.baomidou.mybatisplus.core.conditions.interfaces.Join;
 import com.baomidou.mybatisplus.core.conditions.interfaces.Nested;
 import com.baomidou.mybatisplus.core.conditions.segments.MergeSegments;
 import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 
 /**
  * 所有包装类都继承此抽象类,此抽象类代理了大部分生成 where 条件的方法
@@ -54,7 +54,7 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @SuppressWarnings("rawtypes")
-	public AbstractWrapper getWrapper() {
+    public AbstractWrapper getWrapper() {
         return (AbstractWrapper) wrapperChildren;
     }
 
@@ -230,6 +230,12 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
+    public Children comment(boolean condition, String comment) {
+        getWrapper().comment(condition, comment);
+        return typedThis;
+    }
+
+    @Override
     public Children exists(boolean condition, String existsSql) {
         getWrapper().exists(condition, existsSql);
         return typedThis;
@@ -242,20 +248,20 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     }
 
     @Override
-    public Children and(boolean condition, Function<Param, Param> func) {
-        getWrapper().and(condition, func);
+    public Children and(boolean condition, Consumer<Param> consumer) {
+        getWrapper().and(condition, consumer);
         return typedThis;
     }
 
     @Override
-    public Children or(boolean condition, Function<Param, Param> func) {
-        getWrapper().or(condition, func);
+    public Children or(boolean condition, Consumer<Param> consumer) {
+        getWrapper().or(condition, consumer);
         return typedThis;
     }
 
     @Override
-    public Children nested(boolean condition, Function<Param, Param> func) {
-        getWrapper().nested(condition, func);
+    public Children nested(boolean condition, Consumer<Param> consumer) {
+        getWrapper().nested(condition, consumer);
         return typedThis;
     }
 
@@ -263,5 +269,4 @@ public abstract class AbstractChainWrapper<T, R, Children extends AbstractChainW
     public String getSqlSegment() {
         throw ExceptionUtils.mpe("can not use this method for \"%s\"", "getSqlSegment");
     }
-
 }

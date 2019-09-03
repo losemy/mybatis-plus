@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package com.baomidou.mybatisplus.core;
 
 import org.apache.ibatis.builder.BaseBuilder;
 import org.apache.ibatis.builder.BuilderException;
+import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperEntityResolver;
 import org.apache.ibatis.datasource.DataSourceFactory;
@@ -48,8 +49,7 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
- * Copy from XMLConfigBuilder in Mybatis and replace default Configuration class
- * by MybatisConfiguration class
+ * 从 {@link XMLConfigBuilder} copy 过来, 使用自己的 MybatisConfiguration 而不是 Configuration
  *
  * @author hubin
  * @since 2017-01-04
@@ -85,16 +85,22 @@ public class MybatisXMLConfigBuilder extends BaseBuilder {
         this(new XPathParser(inputStream, true, props, new XMLMapperEntityResolver()), environment, props);
     }
 
-    /**
-     * 使用自己的 MybatisConfiguration
-     */
     private MybatisXMLConfigBuilder(XPathParser parser, String environment, Properties props) {
+        // TODO 使用 MybatisConfiguration 而不是 Configuration
         super(new MybatisConfiguration());
         ErrorContext.instance().resource("SQL Mapper Configuration");
         this.configuration.setVariables(props);
         this.parsed = false;
         this.environment = environment;
         this.parser = parser;
+    }
+
+    /**
+     * TODO 重写改方法,返回值是 MybatisConfiguration 而不是 Configuration
+     */
+    @Override
+    public MybatisConfiguration getConfiguration() {
+        return (MybatisConfiguration) this.configuration;
     }
 
     public Configuration parse() {
@@ -104,11 +110,6 @@ public class MybatisXMLConfigBuilder extends BaseBuilder {
         parsed = true;
         parseConfiguration(parser.evalNode("/configuration"));
         return configuration;
-    }
-
-    @Override
-    public MybatisConfiguration getConfiguration() {
-        return (MybatisConfiguration) this.configuration;
     }
 
     private void parseConfiguration(XNode root) {
@@ -265,7 +266,7 @@ public class MybatisXMLConfigBuilder extends BaseBuilder {
         configuration.setDefaultExecutorType(ExecutorType.valueOf(props.getProperty("defaultExecutorType", "SIMPLE")));
         configuration.setDefaultStatementTimeout(integerValueOf(props.getProperty("defaultStatementTimeout"), null));
         configuration.setDefaultFetchSize(integerValueOf(props.getProperty("defaultFetchSize"), null));
-        //todo 统一mapUnderscoreToCamelCase,默认是false
+        // TODO 统一 mapUnderscoreToCamelCase 属性默认值为 true
         configuration.setMapUnderscoreToCamelCase(booleanValueOf(props.getProperty("mapUnderscoreToCamelCase"), true));
         configuration.setSafeRowBoundsEnabled(booleanValueOf(props.getProperty("safeRowBoundsEnabled"), false));
         configuration.setLocalCacheScope(LocalCacheScope.valueOf(props.getProperty("localCacheScope", "SESSION")));
@@ -435,8 +436,9 @@ public class MybatisXMLConfigBuilder extends BaseBuilder {
             throw new BuilderException("No environment specified.");
         } else if (id == null) {
             throw new BuilderException("Environment requires an id attribute.");
-        } else {
-            return environment.equals(id);
+        } else if (environment.equals(id)) {
+            return true;
         }
+        return false;
     }
 }

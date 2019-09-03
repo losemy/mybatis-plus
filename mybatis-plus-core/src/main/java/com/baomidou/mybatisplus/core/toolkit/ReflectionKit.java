@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,27 +15,18 @@
  */
 package com.baomidou.mybatisplus.core.toolkit;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toMap;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.lang.reflect.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * <p>
@@ -51,7 +42,20 @@ public class ReflectionKit {
     /**
      * class field cache
      */
-    private static final Map<Class<?>, List<Field>> classFieldCache = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Field>> CLASS_FIELD_CACHE = new ConcurrentHashMap<>();
+
+    private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_TYPE_MAP = new IdentityHashMap<>(8);
+
+    static {
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Boolean.class, boolean.class);
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Byte.class, byte.class);
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Character.class, char.class);
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Double.class, double.class);
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Float.class, float.class);
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Integer.class, int.class);
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Long.class, long.class);
+        PRIMITIVE_WRAPPER_TYPE_MAP.put(Short.class, short.class);
+    }
 
     /**
      * <p>
@@ -175,11 +179,11 @@ public class ReflectionKit {
         if (Objects.isNull(clazz)) {
             return Collections.emptyList();
         }
-        List<Field> fields = classFieldCache.get(clazz);
+        List<Field> fields = CLASS_FIELD_CACHE.get(clazz);
         if (CollectionUtils.isEmpty(fields)) {
-            synchronized (classFieldCache) {
+            synchronized (CLASS_FIELD_CACHE) {
                 fields = doGetFieldList(clazz);
-                classFieldCache.put(clazz, fields);
+                CLASS_FIELD_CACHE.put(clazz, fields);
             }
         }
         return fields;
@@ -194,16 +198,25 @@ public class ReflectionKit {
      */
     public static List<Field> doGetFieldList(Class<?> clazz) {
         if (clazz.getSuperclass() != null) {
-            List<Field> fieldList = Stream.of(clazz.getDeclaredFields())
-                /* 过滤静态属性 */
-                .filter(field -> !Modifier.isStatic(field.getModifiers()))
-                /* 过滤 transient关键字修饰的属性 */
-                .filter(field -> !Modifier.isTransient(field.getModifiers()))
-                .collect(toCollection(LinkedList::new));
-            /* 处理父类字段 */
-            Class<?> superClass = clazz.getSuperclass();
             /* 排除重载属性 */
-            return excludeOverrideSuperField(fieldList, getFieldList(superClass));
+            Map<String, Field> fieldMap = excludeOverrideSuperField(clazz.getDeclaredFields(),
+                /* 处理父类字段 */
+                getFieldList(clazz.getSuperclass()));
+            List<Field> fieldList = new ArrayList<>();
+            /*
+             * 重写父类属性过滤后处理忽略部分，支持过滤父类属性功能
+             * 场景：中间表不需要记录创建时间，忽略父类 createTime 公共属性
+             * 中间表实体重写父类属性 ` private transient Date createTime; `
+             */
+            fieldMap.forEach((k, v) -> {
+                /* 过滤静态属性 */
+                if (!Modifier.isStatic(v.getModifiers())
+                    /* 过滤 transient关键字修饰的属性 */
+                    && !Modifier.isTransient(v.getModifiers())) {
+                    fieldList.add(v);
+                }
+            });
+            return fieldList;
         } else {
             return Collections.emptyList();
         }
@@ -214,21 +227,40 @@ public class ReflectionKit {
      * 排序重置父类属性
      * </p>
      *
-     * @param fieldList      子类属性
+     * @param fields         子类属性
      * @param superFieldList 父类属性
      */
-    public static List<Field> excludeOverrideSuperField(List<Field> fieldList, List<Field> superFieldList) {
+    public static Map<String, Field> excludeOverrideSuperField(Field[] fields, List<Field> superFieldList) {
         // 子类属性
-        Map<String, Field> fieldMap = fieldList.stream().collect(toMap(Field::getName, identity()));
-        superFieldList.stream().filter(field -> !fieldMap.containsKey(field.getName())).forEach(fieldList::add);
-        return fieldList;
+        Map<String, Field> fieldMap = Stream.of(fields).collect(toMap(Field::getName, identity()));
+        superFieldList.stream().filter(field -> !fieldMap.containsKey(field.getName()))
+            .forEach(f -> fieldMap.put(f.getName(), f));
+        return fieldMap;
     }
 
+    /**
+     * 获取字段get方法
+     *
+     * @param cls   class
+     * @param field 字段
+     * @return Get方法
+     */
     public static Method getMethod(Class<?> cls, Field field) {
         try {
             return cls.getDeclaredMethod(ReflectionKit.getMethodCapitalize(field, field.getName()));
         } catch (NoSuchMethodException e) {
             throw ExceptionUtils.mpe("Error: NoSuchMethod in %s.  Cause:", e, cls.getName());
         }
+    }
+
+    /**
+     * 判断是否为基本类型或基本包装类型
+     *
+     * @param clazz class
+     * @return 是否基本类型或基本包装类型
+     */
+    public static boolean isPrimitiveOrWrapper(Class<?> clazz) {
+        Assert.notNull(clazz, "Class must not be null");
+        return (clazz.isPrimitive() || PRIMITIVE_WRAPPER_TYPE_MAP.containsKey(clazz));
     }
 }

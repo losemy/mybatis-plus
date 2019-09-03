@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.baomidou.mybatisplus.extension.kotlin
 
+import com.baomidou.mybatisplus.core.conditions.SharedString
 import com.baomidou.mybatisplus.core.conditions.segments.MergeSegments
 import com.baomidou.mybatisplus.core.conditions.update.Update
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils
@@ -49,11 +50,13 @@ class KtUpdateWrapper<T : Any> : AbstractKtWrapper<T, KtUpdateWrapper<T>>, Updat
     }
 
     internal constructor(entity: T, paramNameSeq: AtomicInteger, paramNameValuePairs: Map<String, Any>,
-                         mergeSegments: MergeSegments) {
-        this.entity = entity
+                         mergeSegments: MergeSegments, lastSql: SharedString, sqlComment: SharedString) {
+        this.setEntity(entity)
         this.paramNameSeq = paramNameSeq
         this.paramNameValuePairs = paramNameValuePairs
         this.expression = mergeSegments
+        this.lastSql = lastSql
+        this.sqlComment = sqlComment
     }
 
     override fun getSqlSet(): String? {
@@ -76,6 +79,7 @@ class KtUpdateWrapper<T : Any> : AbstractKtWrapper<T, KtUpdateWrapper<T>>, Updat
     }
 
     override fun instance(): KtUpdateWrapper<T> {
-        return KtUpdateWrapper(entity, paramNameSeq, paramNameValuePairs, MergeSegments())
+        return KtUpdateWrapper(entity, paramNameSeq, paramNameValuePairs, expression, SharedString.emptyString(),
+            SharedString.emptyString())
     }
 }

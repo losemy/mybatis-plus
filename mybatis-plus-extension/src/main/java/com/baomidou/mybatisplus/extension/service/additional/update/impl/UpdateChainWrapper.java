@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import com.baomidou.mybatisplus.extension.service.additional.update.ChainUpdate;
  * @author miemie
  * @since 2018-12-19
  */
-@SuppressWarnings({ "serial", "unchecked" })
+@SuppressWarnings({"serial"})
 public class UpdateChainWrapper<T> extends AbstractChainWrapper<T, String, UpdateChainWrapper<T>, UpdateWrapper<T>>
     implements ChainUpdate<T>, Update<UpdateChainWrapper<T>, String> {
 
@@ -61,5 +61,4 @@ public class UpdateChainWrapper<T> extends AbstractChainWrapper<T, String, Updat
     public BaseMapper<T> getBaseMapper() {
         return baseMapper;
     }
-
 }

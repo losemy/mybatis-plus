@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,14 +15,12 @@
  */
 package com.baomidou.mybatisplus.core.config;
 
-import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.core.incrementer.IKeyGenerator;
 import com.baomidou.mybatisplus.core.injector.ISqlInjector;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
+import com.baomidou.mybatisplus.core.mapper.Mapper;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
@@ -49,10 +47,6 @@ public class GlobalConfig implements Serializable {
      */
     private boolean banner = true;
     /**
-     * 缓存 Sql 解析初始化
-     */
-    private boolean sqlParserCache = false;
-    /**
      * 机器 ID 部分
      */
     private Long workerId;
@@ -60,6 +54,10 @@ public class GlobalConfig implements Serializable {
      * 数据标识 ID 部分
      */
     private Long datacenterId;
+    /**
+     * 是否初始化 SqlRunner
+     */
+    private boolean enableSqlRunner = false;
     /**
      * 数据库相关配置
      */
@@ -71,7 +69,7 @@ public class GlobalConfig implements Serializable {
     /**
      * Mapper父类
      */
-    private Class<?> superMapperClass = BaseMapper.class;
+    private Class<?> superMapperClass = Mapper.class;
     /**
      * 缓存当前Configuration的SqlSessionFactory
      */
@@ -90,19 +88,11 @@ public class GlobalConfig implements Serializable {
      * 标记全局设置 (统一所有入口)
      */
     public void signGlobalConfig(SqlSessionFactory sqlSessionFactory) {
-        if (null != sqlSessionFactory) {
-            GlobalConfigUtils.setGlobalConfig(sqlSessionFactory.getConfiguration(), this);
-        }
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
     @Data
     public static class DbConfig {
-
-        /**
-         * 数据库类型
-         */
-        private DbType dbType = DbType.OTHER;
         /**
          * 主键类型（默认 ID_WORKER）
          */
@@ -112,19 +102,29 @@ public class GlobalConfig implements Serializable {
          */
         private String tablePrefix;
         /**
+         * schema
+         *
+         * @since 3.1.1
+         */
+        private String schema;
+        /**
+         * 字段 format
+         * <li> 例: `%s` </li>
+         * <p> 对主键无效 </p>
+         *
+         * @since 3.1.1
+         */
+        private String columnFormat;
+        /**
          * 表名、是否使用下划线命名（默认 true:默认数据库表下划线命名）
          */
         private boolean tableUnderline = true;
-        /**
-         * String 类型字段 LIKE
-         */
-        private boolean columnLike = false;
         /**
          * 大写命名
          */
         private boolean capitalMode = false;
         /**
-         * 表关键词 key 生成器
+         * 表主键生成器
          */
         private IKeyGenerator keyGenerator;
         /**
@@ -136,8 +136,22 @@ public class GlobalConfig implements Serializable {
          */
         private String logicNotDeleteValue = "0";
         /**
-         * 字段验证策略
+         * 字段验证策略之 insert
+         *
+         * @since 3.1.2
          */
-        private FieldStrategy fieldStrategy = FieldStrategy.NOT_NULL;
+        private FieldStrategy insertStrategy = FieldStrategy.NOT_NULL;
+        /**
+         * 字段验证策略之 update
+         *
+         * @since 3.1.2
+         */
+        private FieldStrategy updateStrategy = FieldStrategy.NOT_NULL;
+        /**
+         * 字段验证策略之 select
+         *
+         * @since 3.1.2
+         */
+        private FieldStrategy selectStrategy = FieldStrategy.NOT_NULL;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package com.baomidou.mybatisplus.test.postgres.config;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.parser.ISqlParser;
-import com.baomidou.mybatisplus.extension.injector.LogicSqlInjector;
 import com.baomidou.mybatisplus.extension.plugins.OptimisticLockerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.tenant.TenantHandler;
@@ -73,11 +72,8 @@ public class MybatisPlusConfig {
 
     @Bean
     public GlobalConfig globalConfig() {
-        GlobalConfig conf = new GlobalConfig().setSqlParserCache(true);
+        GlobalConfig conf = new GlobalConfig();
         conf.setDbConfig(new GlobalConfig.DbConfig());
-        /* 逻辑删除注入器 */
-        LogicSqlInjector logicSqlInjector = new LogicSqlInjector();
-        conf.setSqlInjector(logicSqlInjector);
         return conf;
     }
 
@@ -91,8 +87,9 @@ public class MybatisPlusConfig {
         List<ISqlParser> sqlParserList = new ArrayList<>();
         TenantSqlParser tenantSqlParser = new TenantSqlParser();
         tenantSqlParser.setTenantHandler(new TenantHandler() {
+
             @Override
-            public Expression getTenantId() {
+            public Expression getTenantId(boolean where) {
                 return new LongValue(1L);
             }
 

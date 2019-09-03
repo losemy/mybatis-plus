@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,17 +15,16 @@
  */
 package com.baomidou.mybatisplus.core.handlers;
 
-import java.util.Objects;
-import java.util.Optional;
-
-import org.apache.ibatis.reflection.MetaObject;
-import org.apache.ibatis.reflection.SystemMetaObject;
-
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.core.metadata.TableFieldInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
-import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper;
+import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.reflection.SystemMetaObject;
+
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 元对象字段填充控制器抽象类，实现公共字段自动写入
@@ -37,6 +36,8 @@ public interface MetaObjectHandler {
 
     /**
      * 乐观锁常量
+     *
+     * @deprecated 3.1.1 {@link Constants#MP_OPTLOCK_ET_ORIGINAL}
      */
     String MP_OPTLOCK_ET_ORIGINAL = "MP_OPTLOCK_ET_ORIGINAL";
 
@@ -163,12 +164,13 @@ public interface MetaObjectHandler {
      * @since 3.0.7
      */
     default boolean isFill(String fieldName, Object fieldVal, MetaObject metaObject, FieldFill fieldFill) {
-        TableInfo tableInfo = metaObject.hasGetter(MP_OPTLOCK_ET_ORIGINAL) ?
-            TableInfoHelper.getTableInfo(metaObject.getValue(MP_OPTLOCK_ET_ORIGINAL).getClass())
+        TableInfo tableInfo = metaObject.hasGetter(Constants.MP_OPTLOCK_ET_ORIGINAL) ?
+            TableInfoHelper.getTableInfo(metaObject.getValue(Constants.MP_OPTLOCK_ET_ORIGINAL).getClass())
             : TableInfoHelper.getTableInfo(metaObject.getOriginalObject().getClass());
         if (Objects.nonNull(tableInfo)) {
             Optional<TableFieldInfo> first = tableInfo.getFieldList().stream()
-                .filter(e -> e.getProperty().equals(fieldName) && e.getPropertyType().isAssignableFrom(fieldVal.getClass()))//v_3.1.1+ 设置子类的值也可以通过
+                //v_3.1.1+ 设置子类的值也可以通过
+                .filter(e -> e.getProperty().equals(fieldName) && e.getPropertyType().isAssignableFrom(fieldVal.getClass()))
                 .findFirst();
             if (first.isPresent()) {
                 FieldFill fill = first.get().getFieldFill();

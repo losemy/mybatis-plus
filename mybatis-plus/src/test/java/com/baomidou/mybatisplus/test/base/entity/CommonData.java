@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 package com.baomidou.mybatisplus.test.base.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.Version;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
@@ -24,6 +23,7 @@ import com.baomidou.mybatisplus.test.base.enums.TestEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.time.LocalDateTime;
 
@@ -43,14 +43,14 @@ import java.time.LocalDateTime;
 public class CommonData extends Model<CommonData> {
 
     /**
-	 * serialVersionUID
-	 */
-	private static final long serialVersionUID = 5651603508613034190L;
-	
-	private Long id;
-    @TableField(el = "testInt, jdbcType=INTEGER")
+     * serialVersionUID
+     */
+    private static final long serialVersionUID = 5651603508613034190L;
+
+    private Long id;
+    @TableField(jdbcType = JdbcType.INTEGER)
     private Integer testInt;
-    @TableField(strategy = FieldStrategy.DEFAULT)
+    @TableField
     private String testStr;
     @TableField(value = "c_time", fill = FieldFill.INSERT)
     private LocalDateTime createDatetime;

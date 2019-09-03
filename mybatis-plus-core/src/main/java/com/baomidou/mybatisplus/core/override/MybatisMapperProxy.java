@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.baomidou.mybatisplus.core.override;
 
+import org.apache.ibatis.binding.MapperProxy;
 import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.SqlSession;
 
@@ -23,12 +24,11 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Map;
 
 /**
- * 替换掉引用
- * <p>重写类： org.apache.ibatis.binding.MapperProxy</p>
+ * <p> 从 {@link MapperProxy}  copy 过来 </p>
+ * <li> 使用 MybatisMapperMethod </li>
  *
  * @author miemie
  * @since 2018-06-09
@@ -51,7 +51,7 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
         try {
             if (Object.class.equals(method.getDeclaringClass())) {
                 return method.invoke(this, args);
-            } else if (isDefaultMethod(method)) {
+            } else if (method.isDefault()) {
                 return invokeDefaultMethod(proxy, method, args);
             }
         } catch (Throwable t) {
@@ -78,14 +78,5 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
                 MethodHandles.Lookup.PRIVATE | MethodHandles.Lookup.PROTECTED
                     | MethodHandles.Lookup.PACKAGE | MethodHandles.Lookup.PUBLIC)
             .unreflectSpecial(method, declaringClass).bindTo(proxy).invokeWithArguments(args);
-    }
-
-    /**
-     * Backport of java.lang.reflect.Method#isDefault()
-     */
-    private boolean isDefaultMethod(Method method) {
-        return (method.getModifiers()
-            & (Modifier.ABSTRACT | Modifier.PUBLIC | Modifier.STATIC)) == Modifier.PUBLIC
-            && method.getDeclaringClass().isInterface();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,14 @@
  */
 package com.baomidou.mybatisplus.core.conditions;
 
-import java.util.Objects;
-
 import com.baomidou.mybatisplus.core.conditions.segments.MergeSegments;
+import com.baomidou.mybatisplus.core.conditions.segments.NormalSegmentList;
 import com.baomidou.mybatisplus.core.metadata.TableFieldInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.baomidou.mybatisplus.core.toolkit.*;
+
+import java.util.Objects;
 
 /**
  * 条件构造抽象类
@@ -49,6 +48,10 @@ public abstract class Wrapper<T> implements ISqlSegment {
         return null;
     }
 
+    public String getSqlComment() {
+        return null;
+    }
+
     /**
      * 获取 MergeSegments
      */
@@ -63,7 +66,21 @@ public abstract class Wrapper<T> implements ISqlSegment {
      * <p>3.用法 ${ew.customSqlSegment} (不需要where标签包裹,切记!)</p>
      * <p>4.ew是wrapper定义别名,可自行替换</p>
      */
-    public abstract String getCustomSqlSegment();
+    public String getCustomSqlSegment() {
+        MergeSegments expression = getExpression();
+        if (Objects.nonNull(expression)) {
+            NormalSegmentList normal = expression.getNormal();
+            String sqlSegment = getSqlSegment();
+            if (StringUtils.isNotEmpty(sqlSegment)) {
+                if (normal.isEmpty()) {
+                    return sqlSegment;
+                } else {
+                    return Constants.WHERE + StringPool.SPACE + sqlSegment;
+                }
+            }
+        }
+        return StringPool.EMPTY;
+    }
 
     /**
      * 查询条件为空(包含entity)
@@ -117,13 +134,15 @@ public abstract class Wrapper<T> implements ISqlSegment {
      * 根据实体FieldStrategy属性来决定判断逻辑
      */
     private boolean fieldStrategyMatch(T entity, TableFieldInfo e) {
-        switch (e.getFieldStrategy()) {
+        switch (e.getWhereStrategy()) {
             case NOT_NULL:
                 return Objects.nonNull(ReflectionKit.getMethodValue(entity, e.getProperty()));
             case IGNORED:
                 return true;
             case NOT_EMPTY:
                 return StringUtils.checkValNotNull(ReflectionKit.getMethodValue(entity, e.getProperty()));
+            case NEVER:
+                return false;
             default:
                 return Objects.nonNull(ReflectionKit.getMethodValue(entity, e.getProperty()));
         }

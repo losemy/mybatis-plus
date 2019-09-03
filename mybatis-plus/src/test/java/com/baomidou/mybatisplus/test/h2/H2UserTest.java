@@ -18,9 +18,13 @@ package com.baomidou.mybatisplus.test.h2;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.test.h2.entity.enums.AgeEnum;
-import com.baomidou.mybatisplus.test.h2.entity.persistent.H2User;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.test.h2.entity.H2User;
+import com.baomidou.mybatisplus.test.h2.enums.AgeEnum;
 import com.baomidou.mybatisplus.test.h2.service.IH2UserService;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.select.Select;
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +51,6 @@ class H2UserTest extends BaseTest {
 
     @Autowired
     protected IH2UserService userService;
-
 
     @Test
     @Order(1)
@@ -76,11 +79,19 @@ class H2UserTest extends BaseTest {
         Assertions.assertEquals(1, row);
     }
 
+
+    @Test
+    @Order(6)
+    void testSelectLambdaById() {
+        H2User h2User = userService.getOne(Wrappers.<H2User>lambdaQuery().eq(H2User::getTestId, 101));
+        Assertions.assertNotNull(h2User);
+    }
+
     @Test
     @Order(10)
     void testEntityWrapperSelectSql() {
         QueryWrapper<H2User> ew = new QueryWrapper<>();
-        ew.select("test_id as testId, name, age");
+        ew.select("test_id, name, age");
         List<H2User> list = userService.list(ew);
         for (H2User u : list) {
             Assertions.assertNotNull(u.getTestId());
@@ -118,7 +129,7 @@ class H2UserTest extends BaseTest {
 //            Assert.assertEquals(nameParam, u.getName());
 //            Assert.assertNotNull(u.getId());
 //        }
-//        Assert.assertNotEquals(0, page.getTotal());
+//        Assert.assertNotEquals(0, pagemySelectMaps.getTotal());
 //    }
 
     @Test
@@ -329,5 +340,41 @@ class H2UserTest extends BaseTest {
         Assertions.assertNotNull(tomcat, "tomcat should not be null");
         userService.query().nested(i -> i.eq("name", "Tomcat")).list();
         userService.lambdaUpdate().set(H2User::getName, "Tom").eq(H2User::getName, "Tomcat").update();
+    }
+
+
+    @Test
+    @Order(28)
+    void testSaveBatchException() {
+        try {
+            userService.saveBatch(Arrays.asList(
+                new H2User(1L, "tom"),
+                new H2User(1L, "andy")
+            ));
+        } catch (Exception e) {
+            Assertions.assertTrue(e instanceof PersistenceException);
+        }
+    }
+
+    @Test
+    public void myQueryWithGroupByOrderBy(){
+        userService.mySelectMaps().forEach(System.out::println);
+    }
+
+    @Test
+    void notParser() throws Exception {
+        final String targetSql1 = "SELECT * FROM user WHERE id NOT LIKE ?";
+        final Select select = (Select) CCJSqlParserUtil.parse(targetSql1);
+        Assertions.assertEquals(select.toString(), targetSql1);
+
+
+        final String targetSql2 = "SELECT * FROM user WHERE id NOT IN (?)";
+        final Select select2 = (Select) CCJSqlParserUtil.parse(targetSql2);
+        Assertions.assertEquals(select2.toString(), targetSql2);
+
+
+        final String targetSql3 = "SELECT * FROM user WHERE id IS NOT NULL";
+        final Select select3 = (Select) CCJSqlParserUtil.parse(targetSql3);
+        Assertions.assertEquals(select3.toString(), targetSql3);
     }
 }

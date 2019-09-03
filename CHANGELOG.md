@@ -1,5 +1,97 @@
 ﻿# CHANGELOG
 
+
+## [v3.2.0] 2019.08.26
+- 代码生成器添加达梦数据库支持
+- 修复多主键查询表字段SQL的Bug
+- 新增 updateWrapper 尝试更新，否继续执行saveOrUpdate(T)方法
+- 代码生成器 pg 增加 numeric instant 类型支持
+- 修复InjectionConfig不存在时无法生成代码的问题
+- fix: #1386(github) 逻辑删除字段为Date类型并且非删除数据日期为null
+- 升级依赖 mybatis 版本为 3.5.2
+- 升级依赖 jsqlparser 版本为 2.1
+- 应 EasyScheduler 计划提交 Apache 孵化请求移除 996NPL 协议限制
+- 调整 SQL 移除 SET 部分 Github/1460
+- 移除 SqlMethod 枚举 UPDATE_ALL_COLUMN_BY_ID 属性，推荐使用 AlwaysUpdateSomeColumnById 套
+- fix: #1412(github) github:mybatis-plus-generator can't support oracle
+- fix: github 1380
+- 移除全局配置的 dbType 和 columnLike
+- 移除 fieldStrategy, 使用上个版本新增的三个替代
+- 移除 PerformanceInterceptor 相关, 建议使用 p6spy
+- 移除 el 拆分为 jdbcType typeHandler 等具体属性
+- 升级 gradle-5.5.1,lombok-1.18.4
+- 当selectStatement.getSelectBody()的类型为SetOperationList
+- 移除 GlobalConfig#sqlParserCache 属性,移除 LogicSqlInjector, OrderItem 新增2个快捷生成的method, page 新增一个入参是 List<OrderItem> 的 addOrder method
+- Nested 接口个别入参是 `Function<Param, Param> func` 的method,入参更改为 `Consumer<Param> consumer`,不影响规范的使用
+- fixed gitee/I10XWC 允许根据 TableField 信息判断自定义类型
+- Merge pull request #1445 from kana112233/3.0
+- 支持过滤父类属性功能
+- 添加批量异常捕获测试
+- 多租户ID 值表达式，支持多个 ID 条件查询
+- 扩展新增 json 类型处理器 jackson fastjson 两种实现
+
+
+## [v3.1.2] 2019.06.26
+- EnumTypeHandler 更名为 MybatisEnumTypeHandler,移除 EnumAnnotationTypeHandler
+- 新增自动构建 resultMap 功能,去除转义符
+- 注解增加变量控制是否自动生成resultmap
+- 修改分页缓存Key值错误
+- TableField.el 属性标记过时
+- 取消 MybatisMapWrapperFactory 的自动注册
+- starter 增加默认xml路径扫描
+- 新增 MybatisPlusPropertiesCustomizer 及配置使用
+- ConfigurationCustomizer 内部方法入参更新为 MybatisConfiguration
+- 原有 fieldStrategy 标记过时,新增 3 种 fieldStrategy 进行区分
+- 获取注入方法时传递当前mapperClass
+- 增加sqlite代码自动生成测试代码及测试用的数据库文件
+- JsqlParserCountOptimize 对 left join 的 sql 优化 count 更精确
+- fix(AbstractWrapper.java): 修复 lambda 表达式在 order、groupBy 只有条件一个时引起的类型推断错误
+- apply plugin: 'kotlin'
+- refactor(order): 修复排序字段优先级问题(#IX1QO)
+- 启动就缓存 lambdacache
+- Merge pull request #1213 from sandynz/feature/sqlComment 支持SQL注释
+- 去除 wrapper 的一些变量,wrapper 内部 string 传递优化
+- fix: #1160(github) 分页组件orderBy: 同时存在group by 和order by，且IPage 参数中存在排序属性时，拼接
+- Merge pull request #1253 from ShammgodYoung/patch-1 代码生成器输入表名忽略大小写
+- 新增渲染对象 MAP 信息预处理注入
+- 修改 dts rabbitAdmin bean 判断方式
+- Merge pull request #1255 from ShammgodYoung/patch-2 对serialVersionUID属性进行缩进
+- JsqlParserCountOptimize 加入 boolean 字段,判断是否优化 join
+- Merge pull request #1256 from baomidou/master Master
+- freemarker entity 模板缩进调整
+- 增加jdbcType,typeHandler属性, 合并el属性
+
+
+## [v3.1.1] 2019.04.25
+- 新增 996icu license 协议
+- 新增 mybatis-plus-dts 分布式事务 rabbit 可靠消息机制
+- 新增 DynamicTableNameParser 解析器、支持动态表名
+- 优化 getOne 日志打印
+- sql 优化跳过存储过程
+- 优化分页查询(count为0不继续查询)
+- 修复分页一级缓存无法继续翻页问题
+- MybatisMapWrapperFactory 自动注入
+- 支持纯注解下使用 IPage 的子类作为返回值
+- 逻辑删除不再需要 LogicInject
+- GlobalConfig 加入 enableSqlRunner 属性控制是否注入 SqlRunner ,默认 false
+- SqlParser注解不再需要全局设置参数才会缓存,以及支持注解在 mapper 上
+- GlobalConfig 的 sqlParserCache 设置为过时
+- mybatis 升级到 3.5.1 , mybatis-spring 升级到 2.0.1 , jsqlparser 降级到 1.2
+- ISqlInjector 接口 移除 injectSqlRunner 方法
+- SqlFormatter 类设置为过时
+- 解决自动注入的 method 的 SqlCommandType 在逻辑删除下混乱问题
+- 新增 AlwaysUpdateSomeColumnById 选装件
+- SFunction 继承 Function
+- DbConfig 的 columnLike 和 dbType 属性设置为过时
+- DbConfig 新增 schema 和 columnFormat 属性
+- TableField 注解增加 keepGlobalFormat 属性
+- TableName 注解增加 schema 和 keepGlobalPrefix 属性
+- fixed bug tmp文件格式错乱 github #1048
+- 处理表/字段名称抽象 INameConvert 接口策略 github #1038
+- DB2支持动态 schema 配置 github #1035
+- 把字段缓存的key从className替换成了.class, 如果使用dev-tools会导致：MybatisPlusException: Your property named "xxxx" cannot find the corresponding database column name!(解决方案：去掉dev-tools)
+
+
 ## [v3.1.0] 2019.02.24
 - 升级 `mybatis` 到 `3.5.0` 版本
 - 升级 `mybatis-spring` 到 `2.0.0` 版本

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,4 +59,13 @@ public abstract class InjectionConfig {
      * 注入自定义 Map 对象
      */
     public abstract void initMap();
+
+    /**
+     * 模板待渲染 Object Map 预处理<br>
+     * com.baomidou.mybatisplus.generator.engine.AbstractTemplateEngine
+     * 方法： getObjectMap 结果处理
+     */
+    public Map<String, Object> prepareObjectMap(Map<String, Object> objectMap) {
+        return objectMap;
+    }
 }

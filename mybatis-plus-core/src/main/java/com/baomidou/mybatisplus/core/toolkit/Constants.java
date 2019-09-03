@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,11 @@ package com.baomidou.mybatisplus.core.toolkit;
  * @since 2018-07-22
  */
 public interface Constants extends StringPool {
+
+    /**
+     * project name
+     */
+    String MYBATIS_PLUS = "mybatis-plus";
 
     /**
      * MD5
@@ -84,6 +89,10 @@ public interface Constants extends StringPool {
      */
     String Q_WRAPPER_SQL_SELECT = WRAPPER_DOT + "sqlSelect";
     /**
+     * wrapper 类的属性 sqlComment
+     */
+    String Q_WRAPPER_SQL_COMMENT = WRAPPER_DOT + "sqlComment";
+    /**
      * columnMap
      */
     String COLUMN_MAP = "cm";
@@ -99,4 +108,14 @@ public interface Constants extends StringPool {
      * where
      */
     String WHERE = "WHERE";
+
+    /**
+     * 乐观锁字段
+     */
+    String MP_OPTLOCK_VERSION_ORIGINAL = "MP_OPTLOCK_VERSION_ORIGINAL";
+    String MP_OPTLOCK_VERSION_COLUMN = "MP_OPTLOCK_VERSION_COLUMN";
+    String MP_OPTLOCK_ET_ORIGINAL = "MP_OPTLOCK_ET_ORIGINAL";
+
+    String WRAPPER_PARAM = "MPGENVAL";
+    String WRAPPER_PARAM_FORMAT = "#{%s.paramNameValuePairs.%s}";
 }

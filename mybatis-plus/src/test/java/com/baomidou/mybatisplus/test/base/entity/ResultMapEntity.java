@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,9 @@ package com.baomidou.mybatisplus.test.base.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.test.base.type.JsonTypeHandler;
+import com.baomidou.mybatisplus.test.base.type.ListTypeHandler;
+import com.baomidou.mybatisplus.test.base.type.MapTypeHandler;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -29,7 +32,8 @@ import java.util.Map;
  */
 @Data
 @Accessors(chain = true)
-@TableName(resultMap = "resultChildren1")
+//@TableName(resultMap = "resultChildren1")
+@TableName(autoResultMap = true)
 public class ResultMapEntity {
 
     private Long id;
@@ -38,8 +42,10 @@ public class ResultMapEntity {
     private String column2;
     private String column3;
     private String column4;
-    @TableField(el = "list, typeHandler=com.baomidou.mybatisplus.test.base.type.ListTypeHandler")
+    @TableField(typeHandler = ListTypeHandler.class)
     private List<String> list;
-    @TableField(el = "map, typeHandler=com.baomidou.mybatisplus.test.base.type.MapTypeHandler")
+    @TableField(typeHandler = MapTypeHandler.class)
     private Map<String, Object> map;
+    @TableField(typeHandler = JsonTypeHandler.class)
+    private Map<String, Object> mapp;
 }

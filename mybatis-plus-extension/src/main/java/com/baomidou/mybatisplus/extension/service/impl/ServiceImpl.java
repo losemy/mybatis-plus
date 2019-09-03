@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,23 @@
  */
 package com.baomidou.mybatisplus.extension.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.enums.SqlMethod;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.metadata.TableInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.baomidou.mybatisplus.core.toolkit.*;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import org.apache.ibatis.binding.MapperMethod;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.SqlSessionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -22,26 +39,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import org.apache.ibatis.binding.MapperMethod;
-import org.apache.ibatis.session.SqlSession;
-import org.mybatis.spring.SqlSessionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
-import com.baomidou.mybatisplus.core.enums.SqlMethod;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.metadata.TableInfo;
-import com.baomidou.mybatisplus.core.toolkit.Assert;
-import com.baomidou.mybatisplus.core.toolkit.Constants;
-import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
-import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.core.toolkit.TableInfoHelper;
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 
 /**
  * IService 实现类（ 泛型：M 是 mapper 对象，T 是实体 ， PK 是主键泛型 ）
@@ -51,6 +48,8 @@ import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
  */
 @SuppressWarnings("unchecked")
 public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
+
+    protected Log log = LogFactory.getLog(getClass());
 
     @Autowired
     protected M baseMapper;
@@ -184,23 +183,23 @@ public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
 
     @Override
     public boolean removeById(Serializable id) {
-        return SqlHelper.delBool(baseMapper.deleteById(id));
+        return SqlHelper.retBool(baseMapper.deleteById(id));
     }
 
     @Override
     public boolean removeByMap(Map<String, Object> columnMap) {
         Assert.notEmpty(columnMap, "error: columnMap must not be empty");
-        return SqlHelper.delBool(baseMapper.deleteByMap(columnMap));
+        return SqlHelper.retBool(baseMapper.deleteByMap(columnMap));
     }
 
     @Override
     public boolean remove(Wrapper<T> wrapper) {
-        return SqlHelper.delBool(baseMapper.delete(wrapper));
+        return SqlHelper.retBool(baseMapper.delete(wrapper));
     }
 
     @Override
     public boolean removeByIds(Collection<? extends Serializable> idList) {
-        return SqlHelper.delBool(baseMapper.deleteBatchIds(idList));
+        return SqlHelper.retBool(baseMapper.deleteBatchIds(idList));
     }
 
     @Override
@@ -254,12 +253,12 @@ public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
         if (throwEx) {
             return baseMapper.selectOne(queryWrapper);
         }
-        return SqlHelper.getObject(baseMapper.selectList(queryWrapper));
+        return SqlHelper.getObject(log, baseMapper.selectList(queryWrapper));
     }
 
     @Override
     public Map<String, Object> getMap(Wrapper<T> queryWrapper) {
-        return SqlHelper.getObject(baseMapper.selectMaps(queryWrapper));
+        return SqlHelper.getObject(log, baseMapper.selectMaps(queryWrapper));
     }
 
     @Override
@@ -290,5 +289,10 @@ public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
     @Override
     public IPage<Map<String, Object>> pageMaps(IPage<T> page, Wrapper<T> queryWrapper) {
         return baseMapper.selectMapsPage(page, queryWrapper);
+    }
+
+    @Override
+    public <V> V getObj(Wrapper<T> queryWrapper, Function<? super Object, V> mapper) {
+        return SqlHelper.getObject(log, listObjs(queryWrapper, mapper));
     }
 }

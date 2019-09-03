@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,8 +15,6 @@
  */
 package com.baomidou.mybatisplus.extension.service.additional.query.impl;
 
-import java.util.function.Predicate;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -26,11 +24,13 @@ import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.service.additional.AbstractChainWrapper;
 import com.baomidou.mybatisplus.extension.service.additional.query.ChainQuery;
 
+import java.util.function.Predicate;
+
 /**
  * @author miemie
  * @since 2018-12-19
  */
-@SuppressWarnings({ "serial", "unchecked" })
+@SuppressWarnings({"serial"})
 public class LambdaQueryChainWrapper<T> extends AbstractChainWrapper<T, SFunction<T, ?>, LambdaQueryChainWrapper<T>, LambdaQueryWrapper<T>>
     implements ChainQuery<T>, Query<LambdaQueryChainWrapper<T>, T, SFunction<T, ?>> {
 
@@ -70,5 +70,4 @@ public class LambdaQueryChainWrapper<T> extends AbstractChainWrapper<T, SFunctio
     public BaseMapper<T> getBaseMapper() {
         return baseMapper;
     }
-
 }

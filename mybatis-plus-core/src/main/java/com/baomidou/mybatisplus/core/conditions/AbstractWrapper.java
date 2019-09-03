@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
+ * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,14 +20,19 @@ import com.baomidou.mybatisplus.core.conditions.interfaces.Func;
 import com.baomidou.mybatisplus.core.conditions.interfaces.Join;
 import com.baomidou.mybatisplus.core.conditions.interfaces.Nested;
 import com.baomidou.mybatisplus.core.conditions.segments.MergeSegments;
-import com.baomidou.mybatisplus.core.conditions.segments.NormalSegmentList;
 import com.baomidou.mybatisplus.core.enums.SqlKeyword;
+import com.baomidou.mybatisplus.core.enums.SqlLike;
 import com.baomidou.mybatisplus.core.toolkit.*;
+import com.baomidou.mybatisplus.core.toolkit.sql.SqlUtils;
+import com.baomidou.mybatisplus.core.toolkit.sql.StringEscape;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import static com.baomidou.mybatisplus.core.enums.SqlKeyword.*;
 import static com.baomidou.mybatisplus.core.enums.WrapperKeyword.*;
@@ -44,23 +49,19 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     implements Compare<Children, R>, Nested<Children, Children>, Join<Children>, Func<Children, R> {
 
     /**
-     * 前缀
-     */
-    private static final String MP_GENERAL_PARAMNAME = "MPGENVAL";
-    private static final String DEFAULT_PARAM_ALIAS = Constants.WRAPPER;
-    /**
      * 占位符
      */
-    private static final String PLACE_HOLDER = "{%s}";
-    private static final String MYBATIS_PLUS_TOKEN = "#{%s.paramNameValuePairs.%s}";
     protected final Children typedThis = (Children) this;
-    protected final String paramAlias = null;
     /**
      * 必要度量
      */
     protected AtomicInteger paramNameSeq;
     protected Map<String, Object> paramNameValuePairs;
-    protected String lastSql = StringPool.EMPTY;
+    protected SharedString lastSql;
+    /**
+     * SQL注释
+     */
+    protected SharedString sqlComment;
     /**
      * 数据库表映射实体类
      */
@@ -159,7 +160,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children like(boolean condition, R column, Object val) {
-        return doIt(condition, () -> columnToString(column), LIKE, () -> formatSql("{0}", StringPool.PERCENT + val + StringPool.PERCENT));
+        return likeValue(condition, column, val, SqlLike.DEFAULT);
     }
 
     @Override
@@ -169,12 +170,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children likeLeft(boolean condition, R column, Object val) {
-        return doIt(condition, () -> columnToString(column), LIKE, () -> formatSql("{0}", StringPool.PERCENT + val));
+        return likeValue(condition, column, val, SqlLike.LEFT);
     }
 
     @Override
     public Children likeRight(boolean condition, R column, Object val) {
-        return doIt(condition, () -> columnToString(column), LIKE, () -> formatSql("{0}", val + StringPool.PERCENT));
+        return likeValue(condition, column, val, SqlLike.RIGHT);
     }
 
     @Override
@@ -189,18 +190,18 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
-    public Children and(boolean condition, Function<Children, Children> func) {
-        return and(condition).addNestedCondition(condition, func);
+    public Children and(boolean condition, Consumer<Children> consumer) {
+        return and(condition).addNestedCondition(condition, consumer);
     }
 
     @Override
-    public Children or(boolean condition, Function<Children, Children> func) {
-        return or(condition).addNestedCondition(condition, func);
+    public Children or(boolean condition, Consumer<Children> consumer) {
+        return or(condition).addNestedCondition(condition, consumer);
     }
 
     @Override
-    public Children nested(boolean condition, Function<Children, Children> func) {
-        return addNestedCondition(condition, func);
+    public Children nested(boolean condition, Consumer<Children> consumer) {
+        return addNestedCondition(condition, consumer);
     }
 
     @Override
@@ -216,7 +217,15 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     @Override
     public Children last(boolean condition, String lastSql) {
         if (condition) {
-            this.lastSql = StringPool.SPACE + lastSql;
+            this.lastSql.setStringValue(StringPool.SPACE + lastSql);
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children comment(boolean condition, String comment) {
+        if (condition) {
+            this.sqlComment.setStringValue(comment);
         }
         return typedThis;
     }
@@ -266,7 +275,8 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         if (ArrayUtils.isEmpty(columns)) {
             return typedThis;
         }
-        return doIt(condition, GROUP_BY, () -> columnsToString(columns));
+        return doIt(condition, GROUP_BY,
+            () -> columns.length == 1 ? columnToString(columns[0]) : columnsToString(columns));
     }
 
     @Override
@@ -303,6 +313,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     /**
+     * 内部自用
+     * <p>拼接 LIKE 以及 值</p>
+     */
+    protected Children likeValue(boolean condition, R column, Object val, SqlLike sqlLike) {
+        return doIt(condition, () -> columnToString(column), LIKE, () -> formatSql("{0}", SqlUtils.concatLike(val, sqlLike)));
+    }
+
+    /**
      * 普通查询条件
      *
      * @param condition  是否执行
@@ -319,8 +337,10 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      *
      * @param condition 查询条件值
      */
-    protected Children addNestedCondition(boolean condition, Function<Children, Children> func) {
-        return doIt(condition, LEFT_BRACKET, func.apply(instance()), RIGHT_BRACKET);
+    protected Children addNestedCondition(boolean condition, Consumer<Children> consumer) {
+        final Children instance = instance();
+        consumer.accept(instance);
+        return doIt(condition, LEFT_BRACKET, instance, RIGHT_BRACKET);
     }
 
     /**
@@ -363,9 +383,9 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         }
         if (ArrayUtils.isNotEmpty(params)) {
             for (int i = 0; i < params.length; ++i) {
-                String genParamName = MP_GENERAL_PARAMNAME + paramNameSeq.incrementAndGet();
-                sqlStr = sqlStr.replace(String.format(PLACE_HOLDER, i),
-                    String.format(MYBATIS_PLUS_TOKEN, getParamAlias(), genParamName));
+                String genParamName = Constants.WRAPPER_PARAM + paramNameSeq.incrementAndGet();
+                sqlStr = sqlStr.replace(String.format("{%s}", i),
+                    String.format(Constants.WRAPPER_PARAM_FORMAT, Constants.WRAPPER, genParamName));
                 paramNameValuePairs.put(genParamName, params[i]);
             }
         }
@@ -389,6 +409,8 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         paramNameSeq = new AtomicInteger(0);
         paramNameValuePairs = new HashMap<>(16);
         expression = new MergeSegments();
+        lastSql = SharedString.emptyString();
+        sqlComment = SharedString.emptyString();
     }
 
     /**
@@ -405,50 +427,25 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
         return typedThis;
     }
 
-    @SuppressWarnings("all")
-    public String getParamAlias() {
-        return StringUtils.isEmpty(paramAlias) ? DEFAULT_PARAM_ALIAS : paramAlias;
-    }
-
     @Override
     public String getSqlSegment() {
         String sqlSegment = expression.getSqlSegment();
         if (StringUtils.isNotEmpty(sqlSegment)) {
-            return sqlSegment + lastSql;
+            return sqlSegment + lastSql.getStringValue();
         }
-        if (StringUtils.isNotEmpty(lastSql)) {
-            return lastSql;
+        if (StringUtils.isNotEmpty(lastSql.getStringValue())) {
+            return lastSql.getStringValue();
         }
         return null;
     }
 
     @Override
-    public String getCustomSqlSegment() {
-        MergeSegments expression = getExpression();
-        if (Objects.nonNull(expression)) {
-            NormalSegmentList normal = expression.getNormal();
-            String sqlSegment = getSqlSegment();
-            if (StringUtils.isNotEmpty(sqlSegment)) {
-                if (normal.isEmpty()) {
-                    return sqlSegment;
-                } else {
-                    return concatWhere(sqlSegment);
-                }
-            }
+    public String getSqlComment() {
+        if (StringUtils.isNotEmpty(sqlComment.getStringValue())) {
+            return "/*" + StringEscape.escapeRawString(sqlComment.getStringValue()) + "*/";
         }
-        return StringUtils.EMPTY;
+        return null;
     }
-
-    /**
-     * 拼接`WHERE`至SQL前
-     *
-     * @param sql sql
-     * @return 带 where 的 sql
-     */
-    private String concatWhere(String sql) {
-        return Constants.WHERE + " " + sql;
-    }
-
 
     @Override
     public MergeSegments getExpression() {
@@ -460,15 +457,6 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     /**
-     * 多字段转换为逗号 "," 分割字符串
-     *
-     * @param columns 多字段
-     */
-    protected String columnsToString(R... columns) {
-        return Arrays.stream(columns).map(this::columnToString).collect(joining(StringPool.COMMA));
-    }
-
-    /**
      * 获取 columnName
      */
     protected String columnToString(R column) {
@@ -476,6 +464,15 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
             return (String) column;
         }
         throw ExceptionUtils.mpe("not support this column !");
+    }
+
+    /**
+     * 多字段转换为逗号 "," 分割字符串
+     *
+     * @param columns 多字段
+     */
+    protected String columnsToString(R... columns) {
+        return Arrays.stream(columns).map(this::columnToString).collect(joining(StringPool.COMMA));
     }
 
     @Override
